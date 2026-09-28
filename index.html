@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCK Studio</title>
+<style>
+body{margin:0;background:#0e0e0e;color:white;font-family:system-ui;padding:16px;padding-bottom:90px}
+.top{display:flex;justify-content:space-between;align-items:center}
+.label{font-weight:700;margin:18px 0 10px}
+.input{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:14px;padding:16px;width:100%;box-sizing:border-box;color:white}
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pill{padding:10px 18px;border-radius:999px;background:#1c1c1e;border:1px solid #2a2a2a;font-size:14px}
+.pill.active{background:#ff2d2d;border-color:#ff2d2d}
+.scene{background:#1c1c1e;border-radius:14px;padding:14px;margin-top:10px}
+.scene textarea{width:100%;background:#111;border:none;border-radius:10px;padding:12px;color:white;min-height:80px;box-sizing:border-box}
+.add-scene{border:1px dashed #333;border-radius:14px;padding:14px;text-align:center;color:#ff2d2d;margin-top:10px}
+.gen{position:fixed;bottom:16px;left:16px;right:16px;background:#ff2d2d;border:none;padding:16px;border-radius:14px;color:white;font-weight:800}
+</style>
+</head>
+<body>
+<div class="top"><b>New Movie</b><span style="color:#ff2d2d">Save</span></div>
+<div class="label">Movie Title</div><input class="input" id="title" value="Untitled Movie">
+<div class="label">Style</div><div class="pills" id="pills">
+<div class="pill" data-v="Nollywood">🎬 Nollywood</div><div class="pill active" data-v="Hollywood cinematic 4k">⭐ Hollywood</div><div class="pill" data-v="Pixar animation">✨ Animation</div><div class="pill" data-v="Cartoon">🎨 Cartoon</div><div class="pill" data-v="Realistic">📷 Realistic</div><div class="pill" data-v="Horror dark">🩸 Horror</div><div class="pill" data-v="Action fighting">💥 Action</div><div class="pill" data-v="Romance love">❤️ Romance</div></div>
+<div class="label">Script</div><div id="scenes"><div class="scene"><b>▼ Scene 1</b><textarea placeholder="Describe: e.g. Zambian pastor preaching..."></textarea></div></div>
+<div class="add-scene" onclick="addScene()">⊕ Add Scene</div><div id="output"></div>
+<button class="gen" onclick="generate()">🎬 Generate Movie</button>
+<script>
+let selectedStyle="Hollywood cinematic 4k"
+document.querySelectorAll('.pill').forEach(p=>{p.onclick=()=>{document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));p.classList.add('active');selectedStyle=p.dataset.v}})
+let c=1;function addScene(){c++;document.getElementById('scenes').innerHTML+=`<div class="scene"><b>▼ Scene ${c}</b><textarea></textarea></div>`}
+async function generate(){
+ const texts=[...document.querySelectorAll('.scene textarea')].map(t=>t.value).filter(Boolean)
+ if(!texts.length){alert('Write scene');return}
+ const prompt=texts.join('. ')+', '+selectedStyle
+ const out=document.getElementById('output');out.innerHTML='<p style="text-align:center;color:#888">Generating... 60 sec...</p>'
+ try{
+  const res=await fetch('/.netlify/functions/generate',{method:'POST',body:JSON.stringify({prompt})})
+  const data=await res.json()
+  if(data.video){out.innerHTML=`<video controls autoplay src="${data.video}" style="width:100%;border-radius:14px;margin-top:12px"></video><br><a href="${data.video}" download style="color:#ff2d2d">Download</a>`}
+  else out.innerHTML='Error: '+JSON.stringify(data)
+ }catch(e){out.innerHTML='Failed: '+e.message}
+}
+</script>
+</body>
+</html>
